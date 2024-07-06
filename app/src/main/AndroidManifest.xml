@@ -22,9 +22,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <data android:host="auth" android:scheme="spotify-sdk"/>
-            </intent-filter>
         </activity>
     </application>
 
