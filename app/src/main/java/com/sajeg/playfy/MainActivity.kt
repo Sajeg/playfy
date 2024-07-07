@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
     private val clientId = BuildConfig.clientId
     private val redirectUri = "playfy://callback"
     private var spotifyAppRemote: SpotifyAppRemote? = null
+    private var spotifyApi: SpotifyApi? = null
     private lateinit var navController: NavHostController
 
     private val spotifyAuthLauncher =
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
                     AuthorizationResponse.Type.TOKEN -> {
                         val token = response.accessToken
                         Log.d("SpotifyAuth", "Token: $token")
+                        spotifyApi = SpotifyApi(token)
                         connectSpotifyAppRemote(token)
                     }
 
@@ -120,7 +122,7 @@ class MainActivity : ComponentActivity() {
                 val track: Track = playerState.track
                 Log.d("MainActivity", "${track.name} by ${track.artist.name}")
             }
-
+            navController.navigate(HomeScreen)
             // Spotify is running
         }
 
@@ -132,6 +134,8 @@ class MainActivity : ComponentActivity() {
                 )
             )
         }
+
+        spotifyApi!!.getPlaylists()
     }
 
     override fun onStop() {
