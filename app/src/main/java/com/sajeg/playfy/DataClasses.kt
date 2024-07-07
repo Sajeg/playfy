@@ -15,3 +15,9 @@ data class Songs(
     val title: String,
     val artist: String
 )
+
+data class SpotifySong(
+    val title: String,
+    val artist: String,
+    val id: String
+)

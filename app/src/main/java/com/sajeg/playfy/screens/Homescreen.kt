@@ -1,20 +1,30 @@
 package com.sajeg.playfy.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.playfy.Playlist
+import com.sajeg.playfy.PlaylistScreen
 import com.sajeg.playfy.paddingModifier
 import com.sajeg.playfy.spotifyApi
 import org.json.JSONObject
@@ -44,8 +54,8 @@ fun HomeScreen(navController: NavController) {
                             trackCount = playlist.getJSONObject("tracks").getInt("total")
                         )
                     )
-                    playlists = outputPlaylists
                 }
+                playlists = outputPlaylists
             }
         }
     }
@@ -57,14 +67,28 @@ fun HomeScreen(navController: NavController) {
             text = "Hi, $name",
             fontSize = 32.sp
         )
-        LazyColumn {
-            if (playlists != null) {
-                for (playlist in playlists!!) {
-                    item {
-                        Column {
-                            GlideImage(model = playlist.imgUrl, contentDescription = playlist.name)
-                            Text(text = playlist.name)
-                        }
+        Text(text = "Select a Playlist, that you want to modify")
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(horizontal = 5.dp, vertical = 20.dp),
+        ) {
+            playlists?.let { list ->
+                items(list) { playlist ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        GlideImage(
+                            model = playlist.imgUrl,
+                            contentDescription = playlist.name,
+                            modifier = Modifier
+                                .size(150.dp)
+                                .aspectRatio(1f)
+                                .clickable {
+                                    navController.navigate(PlaylistScreen(playlist.id))
+                                }
+                        )
+                        Text(text = playlist.name)
                     }
                 }
             }
