@@ -18,20 +18,21 @@ import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.Track
-import com.spotify.sdk.android.auth.AccountsQueryParameters.CLIENT_ID
-import com.spotify.sdk.android.auth.AccountsQueryParameters.REDIRECT_URI
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 var paddingModifier = Modifier.padding(0.dp)
-var clientId = BuildConfig.clientId
 
 class MainActivity : ComponentActivity() {
+    private val clientId = BuildConfig.clientId
     private val redirectUri = "playfy://callback"
-    private val REQUEST_CODE = 1337
     private var spotifyAppRemote: SpotifyAppRemote? = null
     private lateinit var navController: NavHostController
+
     private val spotifyAuthLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
@@ -40,16 +41,15 @@ class MainActivity : ComponentActivity() {
                     AuthorizationResponse.Type.TOKEN -> {
                         val token = response.accessToken
                         Log.d("SpotifyAuth", "Token: $token")
-
-                        connectSpotifyAppRemote()
+                        connectSpotifyAppRemote(token)
                     }
 
                     AuthorizationResponse.Type.ERROR -> {
-                        Log.e("SpotifyAuth", "Auth error: " + response.error)
+                        Log.e("SpotifyAuth", "Auth error: ${response.error}")
                     }
 
                     else -> {
-                        Log.d("SpotifyAuth", "Auth result: " + response.type)
+                        Log.d("SpotifyAuth", "Auth result: ${response.type}")
                     }
                 }
             }
@@ -93,42 +93,49 @@ class MainActivity : ComponentActivity() {
         spotifyAuthLauncher.launch(intent)
     }
 
-    private fun connectSpotifyAppRemote() {
-        val connectionParams = ConnectionParams.Builder(CLIENT_ID)
-            .setRedirectUri(REDIRECT_URI)
+    private fun connectSpotifyAppRemote(token: String) {
+        val connectionParams = ConnectionParams.Builder(clientId)
+            .setRedirectUri(redirectUri)
             .showAuthView(true)
             .build()
 
         SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
             override fun onConnected(appRemote: SpotifyAppRemote) {
+                spotifyAppRemote = appRemote
                 Log.d("SpotifyAuth", "Connected! Yay!")
-                // Now you can start using the SpotifyAppRemote
+                onSpotifyConnected()
             }
 
             override fun onFailure(throwable: Throwable) {
-                Log.e("SpotifyAuth", throwable.message, throwable)
+                Log.e("SpotifyAuth", "Connection failed: ${throwable.message}", throwable)
             }
         })
     }
 
-    private fun connected() {
-        spotifyAppRemote?.let {
-            // Play a playlist
-            it.playerApi.pause()
-            // Subscribe to PlayerState
-            it.playerApi.subscribeToPlayerState().setEventCallback {
-                val track: Track = it.track
-                Log.d("MainActivity", track.name + " by " + track.artist.name)
+    private fun onSpotifyConnected() {
+        spotifyAppRemote?.let { remote ->
+            remote.playerApi.pause()
+
+            remote.playerApi.subscribeToPlayerState().setEventCallback { playerState ->
+                val track: Track = playerState.track
+                Log.d("MainActivity", "${track.name} by ${track.artist.name}")
             }
+
+            // Spotify is running
         }
 
+        CoroutineScope(Dispatchers.IO).launch {
+            GeminiApi.extendPlaylist(
+                listOf(
+                    Songs("In the end", "Linkin Park"),
+                    Songs("A murder of Crows", "Sum 41")
+                )
+            )
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        spotifyAppRemote?.let {
-            SpotifyAppRemote.disconnect(it)
-        }
-
+        SpotifyAppRemote.disconnect(spotifyAppRemote)
     }
 }
