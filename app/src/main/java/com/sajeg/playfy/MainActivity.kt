@@ -85,8 +85,7 @@ class MainActivity : ComponentActivity() {
                 "playlist-read-private",
                 "playlist-read-collaborative",
                 "playlist-modify-private",
-                "playlist-modify-public",
-                "streaming"
+                "playlist-modify-public"
             )
         )
         val request = builder.build()
@@ -116,7 +115,6 @@ class MainActivity : ComponentActivity() {
 
     private fun onSpotifyConnected() {
         spotifyAppRemote?.let { remote ->
-            remote.playerApi.pause()
 
             remote.playerApi.subscribeToPlayerState().setEventCallback { playerState ->
                 val track: Track = playerState.track

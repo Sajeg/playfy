@@ -1,5 +1,6 @@
 package com.sajeg.playfy
 
+import android.util.Log
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -48,7 +49,7 @@ class SpotifyApi(private val token: String) {
 
         client.newCall(request).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: okhttp3.Call, e: IOException) {
-                e.printStackTrace()
+                Log.d("PlaylistContent", e.toString())
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -64,7 +65,7 @@ class SpotifyApi(private val token: String) {
                             val artists = track.getJSONArray("artists")
                             var artistsString = ""
                             for (j in 0..<artists.length()) {
-                                val artist = artists[i] as JSONObject
+                                val artist = artists[j] as JSONObject
                                 artistsString += artist.getString("name")
                             }
 
@@ -76,6 +77,7 @@ class SpotifyApi(private val token: String) {
                                 )
                             )
                         }
+                        Log.d("PlaylistContent", songs.toString())
                         onDone(songs.toList())
                     }
                 }
@@ -103,6 +105,51 @@ class SpotifyApi(private val token: String) {
                         val jsonObject = JSONObject(it)
                         userName = jsonObject.getString("display_name")
                         onDone(userName!!)
+                    }
+                }
+            }
+        })
+    }
+
+    fun searchSong(song: Songs, onDone: (track: SpotifySong) -> Unit) {
+        val client = OkHttpClient()
+
+        val request = Request.Builder()
+            .url(
+                "https://api.spotify.com/v1/search?${
+                    song.title.replace(
+                        " ",
+                        "+"
+                    )
+                }+${song.artist.replace(" ", "+")}&type=track"
+            )
+            .addHeader("Authorization", "Bearer $token")
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    responseBody?.let {
+                        val jsonObject = JSONObject(it)
+                        val tracks = jsonObject.getJSONArray("items")[0] as JSONObject
+                        val artists = tracks.getJSONArray("artists")
+                        var artistsString = ""
+                        for (j in 0..<artists.length()) {
+                            val artist = artists[j] as JSONObject
+                            artistsString += artist.getString("name")
+                        }
+                        onDone(
+                            SpotifySong(
+                                title = tracks.getString("name"),
+                                artist = tracks.getString("artist"),
+                                id = tracks.getString("id")
+                            )
+                        )
                     }
                 }
             }
