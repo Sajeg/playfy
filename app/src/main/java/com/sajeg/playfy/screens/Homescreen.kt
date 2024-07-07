@@ -25,8 +25,8 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.playfy.Playlist
 import com.sajeg.playfy.PlaylistScreen
+import com.sajeg.playfy.SpotifyApi
 import com.sajeg.playfy.paddingModifier
-import com.sajeg.playfy.spotifyApi
 import org.json.JSONObject
 
 
@@ -35,27 +35,30 @@ import org.json.JSONObject
 fun HomeScreen(navController: NavController) {
     var name by remember { mutableStateOf("") }
     var playlists by remember { mutableStateOf<List<Playlist>?>(null) }
-    if (spotifyApi != null) {
-        spotifyApi!!.getUsername { userName ->
-            name = userName
-        }
-        if (playlists == null) {
-            spotifyApi!!.getPlaylists {
-                val outputPlaylists = mutableListOf<Playlist>()
-                for (i in 0..<it.length()) {
-                    val playlist = it[i] as JSONObject
-                    val images = playlist.getJSONArray("images")[0] as JSONObject
-                    outputPlaylists.add(
-                        Playlist(
-                            id = playlist.getString("id"),
-                            name = playlist.getString("name"),
-                            description = playlist.getString("description"),
-                            imgUrl = images.getString("url"),
-                            trackCount = playlist.getJSONObject("tracks").getInt("total")
+    var sentRequest by remember { mutableStateOf(false) }
+
+    if (SpotifyApi.token != "" && name == "") {
+        SpotifyApi.getUsername { username ->
+            name = username
+            if (!sentRequest) {
+                SpotifyApi.getPlaylists {
+                    val outputPlaylists = mutableListOf<Playlist>()
+                    for (i in 0..<it.length()) {
+                        val playlist = it[i] as JSONObject
+                        val images = playlist.getJSONArray("images")[0] as JSONObject
+                        outputPlaylists.add(
+                            Playlist(
+                                id = playlist.getString("id"),
+                                name = playlist.getString("name"),
+                                description = playlist.getString("description"),
+                                imgUrl = images.getString("url"),
+                                trackCount = playlist.getJSONObject("tracks").getInt("total")
+                            )
                         )
-                    )
+                    }
+                    playlists = outputPlaylists
                 }
-                playlists = outputPlaylists
+                sentRequest = true
             }
         }
     }

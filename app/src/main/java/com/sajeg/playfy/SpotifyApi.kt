@@ -9,20 +9,24 @@ import okio.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 
-class SpotifyApi(private val token: String) {
+object SpotifyApi {
+    var token = ""
     var userName: String? = null
+    var userId: String? = null
     var playlists: JSONArray? = null
 
     fun getPlaylists(onDone: (playlists: JSONArray) -> Unit) {
+        Log.d("Requesting...", "Playlist")
         val client = OkHttpClient()
 
         val request = Request.Builder()
-            .url("https://api.spotify.com/v1/me/playlists")
+            .url("https://api.spotify.com/v1/users/$userId/playlists")
             .addHeader("Authorization", "Bearer $token")
             .build()
 
         client.newCall(request).enqueue(object : okhttp3.Callback {
             override fun onFailure(call: okhttp3.Call, e: IOException) {
+                Log.d("ErrorResponse", "Error")
                 e.printStackTrace()
             }
 
@@ -30,6 +34,7 @@ class SpotifyApi(private val token: String) {
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
                     responseBody?.let {
+                        Log.d("SuccessfulResponse", it)
                         val jsonObject = JSONObject(it)
                         playlists = jsonObject.getJSONArray("items")
                         onDone(jsonObject.getJSONArray("items"))
@@ -43,7 +48,7 @@ class SpotifyApi(private val token: String) {
         val client = OkHttpClient()
 
         val request = Request.Builder()
-            .url("https://api.spotify.com/v1/playlists/{$id}/tracks")
+            .url("https://api.spotify.com/v1/playlists/$id/tracks")
             .addHeader("Authorization", "Bearer $token")
             .build()
 
@@ -103,6 +108,7 @@ class SpotifyApi(private val token: String) {
                     val responseBody = response.body?.string()
                     responseBody?.let {
                         val jsonObject = JSONObject(it)
+                        userId = jsonObject.getString("id")
                         userName = jsonObject.getString("display_name")
                         onDone(userName!!)
                     }

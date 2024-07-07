@@ -32,30 +32,27 @@ class MainActivity : ComponentActivity() {
     private val clientId = BuildConfig.clientId
     private val redirectUri = "playfy://callback"
     private var spotifyAppRemote: SpotifyAppRemote? = null
+    private var spotifyToken: String? = null
     private lateinit var navController: NavHostController
 
-    private val spotifyAuthLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val response = AuthorizationClient.getResponse(result.resultCode, result.data)
-                when (response.type) {
-                    AuthorizationResponse.Type.TOKEN -> {
-                        val token = response.accessToken
-                        Log.d("SpotifyAuth", "Token: $token")
-                        spotifyApi = SpotifyApi(token)
-                        connectSpotifyAppRemote(token)
-                    }
-
-                    AuthorizationResponse.Type.ERROR -> {
-                        Log.e("SpotifyAuth", "Auth error: ${response.error}")
-                    }
-
-                    else -> {
-                        Log.d("SpotifyAuth", "Auth result: ${response.type}")
-                    }
+    private val spotifyAuthLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val response = AuthorizationClient.getResponse(result.resultCode, result.data)
+            when (response.type) {
+                AuthorizationResponse.Type.TOKEN -> {
+                    spotifyToken = response.accessToken
+                    Log.d("SpotifyAuth", "Token: $spotifyToken")
+                    onSpotifyAuthenticated()
+                }
+                AuthorizationResponse.Type.ERROR -> {
+                    Log.e("SpotifyAuth", "Auth error: ${response.error}")
+                }
+                else -> {
+                    Log.d("SpotifyAuth", "Auth result: ${response.type}")
                 }
             }
         }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,62 +76,30 @@ class MainActivity : ComponentActivity() {
             AuthorizationResponse.Type.TOKEN,
             redirectUri
         )
-
-        builder.setScopes(
-            arrayOf(
-                "playlist-read-private",
-                "playlist-read-collaborative",
-                "playlist-modify-private",
-                "playlist-modify-public"
-            )
-        )
+        builder.setScopes(arrayOf(
+            "playlist-read-private",
+            "playlist-read-collaborative",
+            "playlist-modify-private",
+            "playlist-modify-public",
+            "user-library-read",
+            "user-read-private",
+            "user-read-email"
+        ))
         val request = builder.build()
-
         val intent = AuthorizationClient.createLoginActivityIntent(this, request)
         spotifyAuthLauncher.launch(intent)
     }
 
-    private fun connectSpotifyAppRemote(token: String) {
-        val connectionParams = ConnectionParams.Builder(clientId)
-            .setRedirectUri(redirectUri)
-            .showAuthView(true)
-            .build()
+    private fun onSpotifyAuthenticated() {
+        // Here you can start using the Spotify Web API with the token
+        Log.d("SpotifyAuth", "Authenticated successfully!")
 
-        SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
-            override fun onConnected(appRemote: SpotifyAppRemote) {
-                spotifyAppRemote = appRemote
-                Log.d("SpotifyAuth", "Connected! Yay!")
-                onSpotifyConnected()
+        // Example: Use the token to make API requests
+        spotifyToken?.let { token ->
+            SpotifyApi.token = token
+            CoroutineScope(Dispatchers.Main).launch {
+                navController.navigate(HomeScreen)
             }
-
-            override fun onFailure(throwable: Throwable) {
-                Log.e("SpotifyAuth", "Connection failed: ${throwable.message}", throwable)
-            }
-        })
-    }
-
-    private fun onSpotifyConnected() {
-        spotifyAppRemote?.let { remote ->
-
-            remote.playerApi.subscribeToPlayerState().setEventCallback { playerState ->
-                val track: Track = playerState.track
-                Log.d("MainActivity", "${track.name} by ${track.artist.name}")
-            }
-            navController.navigate(HomeScreen)
         }
-
-        CoroutineScope(Dispatchers.IO).launch {
-            GeminiApi.extendPlaylist(
-                listOf(
-                    Songs("In the end", "Linkin Park"),
-                    Songs("A murder of Crows", "Sum 41")
-                )
-            )
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        SpotifyAppRemote.disconnect(spotifyAppRemote)
     }
 }

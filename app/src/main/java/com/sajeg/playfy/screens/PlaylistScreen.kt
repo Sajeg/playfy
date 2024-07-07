@@ -10,21 +10,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.sajeg.playfy.SpotifyApi
 import com.sajeg.playfy.SpotifySong
 import com.sajeg.playfy.spotifyApi
 
 @Composable
 fun PlayListView(id: String) {
-    val api = spotifyApi
     var tracks by remember { mutableStateOf<List<SpotifySong>?>(null) }
-    if (api != null) {
+    if (tracks == null) {
         Log.d("SpotifyApi", "true")
-        spotifyApi!!.getTracks(id, onDone = {
+        SpotifyApi.getTracks(id, onDone = {
             tracks = it
         })
     }
     Column {
-        Text(text = api!!.userName!!)
+        Text(text = SpotifyApi.userName!!)
     }
     LazyColumn {
         if (tracks != null) {
