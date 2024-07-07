@@ -26,12 +26,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 var paddingModifier = Modifier.padding(0.dp)
+var spotifyApi: SpotifyApi? = null
 
 class MainActivity : ComponentActivity() {
     private val clientId = BuildConfig.clientId
     private val redirectUri = "playfy://callback"
     private var spotifyAppRemote: SpotifyAppRemote? = null
-    private var spotifyApi: SpotifyApi? = null
     private lateinit var navController: NavHostController
 
     private val spotifyAuthLauncher =
@@ -65,12 +65,12 @@ class MainActivity : ComponentActivity() {
                 navController = rememberNavController()
                 SetupNavGraph(navController = navController)
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    paddingModifier = paddingModifier.padding(innerPadding)
+                    paddingModifier = Modifier.padding(innerPadding)
+                    SetupNavGraph(navController = navController)
                 }
             }
         }
         authenticateSpotify()
-        // connectSpotifyAppRemote()
     }
 
     private fun authenticateSpotify() {
@@ -123,7 +123,6 @@ class MainActivity : ComponentActivity() {
                 Log.d("MainActivity", "${track.name} by ${track.artist.name}")
             }
             navController.navigate(HomeScreen)
-            // Spotify is running
         }
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -134,8 +133,6 @@ class MainActivity : ComponentActivity() {
                 )
             )
         }
-
-        spotifyApi!!.getPlaylists()
     }
 
     override fun onStop() {

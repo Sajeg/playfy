@@ -80,5 +80,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     implementation(libs.generativeai)
 }

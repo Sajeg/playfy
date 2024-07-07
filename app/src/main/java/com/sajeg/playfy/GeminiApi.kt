@@ -12,11 +12,6 @@ import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-@Serializable
-data class Songs(
-    val title: String,
-    val artist: String
-)
 
 object GeminiApi {
     private val modelPlaylistExtender = GenerativeModel(
