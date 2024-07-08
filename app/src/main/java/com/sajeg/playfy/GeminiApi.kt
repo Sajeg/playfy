@@ -1,7 +1,5 @@
 package com.sajeg.playfy
 
-import android.util.Log
-import android.widget.Toast
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.Content
@@ -10,12 +8,7 @@ import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.TextPart
 import com.google.ai.client.generativeai.type.asTextOrNull
 import com.google.ai.client.generativeai.type.generationConfig
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import okhttp3.internal.wait
 
 
 object GeminiApi {
@@ -26,7 +19,7 @@ object GeminiApi {
             role = "user", parts = listOf(
                 TextPart(
                     "You'll receive a list of songs. You task is then to add 10 songs with " +
-                            "their title and artist that are similar to the songs, that are already in the playlist. " +
+                            "their title and artist that are similar to the songs, that are already in the playlist with a good mix between popular and unknown songs. " +
                             "Do not return the Songs, that you received."
                 )
             )

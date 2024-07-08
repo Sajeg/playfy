@@ -34,11 +34,14 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.google.gson.Gson
 import com.sajeg.playfy.GeminiApi
 import com.sajeg.playfy.R
+import com.sajeg.playfy.SelectorScreen
 import com.sajeg.playfy.Songs
 import com.sajeg.playfy.SpotifyApi
 import com.sajeg.playfy.SpotifySong
+import com.sajeg.playfy.SpotifySongList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -111,7 +114,10 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
                         for (newSong in output) {
                             SpotifyApi.searchSong(newSong, onDone = {
                                 Log.d("Gemini", "converted Song ")
-                                SpotifyApi.addSong(it, id)
+                                spotifyOutput.add(it)
+                                if (spotifyOutput.size == 10) {
+                                    navController.navigate(SelectorScreen(SpotifySongList(spotifyOutput)))
+                                }
                             })
                         }
                     }

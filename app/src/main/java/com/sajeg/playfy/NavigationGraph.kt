@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.sajeg.playfy.screens.HomeScreen
 import com.sajeg.playfy.screens.PlayListView
+import com.sajeg.playfy.screens.SelectorScreen
 import com.sajeg.playfy.screens.SignInScreen
 import kotlinx.serialization.Serializable
 
@@ -21,6 +22,10 @@ fun SetupNavGraph(
         composable<SignInScreen> {
             SignInScreen()
         }
+        composable<SelectorScreen> {
+            val params = it.toRoute<SelectorScreen>()
+            SelectorScreen(navController = navController, songString = params.tracks)
+        }
         composable<PlaylistScreen> {
             val params = it.toRoute<PlaylistScreen>()
             PlayListView(id = params.id, params.title, params.imgUrl, navController)
@@ -33,6 +38,11 @@ object HomeScreen
 
 @Serializable
 object SignInScreen
+
+@Serializable
+data class SelectorScreen(
+    val tracks: SpotifySongList
+)
 
 @Serializable
 data class PlaylistScreen(
