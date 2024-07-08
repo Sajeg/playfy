@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import okhttp3.internal.wait
 
 
 object GeminiApi {
@@ -24,7 +25,7 @@ object GeminiApi {
         systemInstruction = Content(
             role = "user", parts = listOf(
                 TextPart(
-                    "You'll receive a list of songs. You task is then to add 50 songs with " +
+                    "You'll receive a list of songs. You task is then to add 10 songs with " +
                             "their title and artist that are similar to the songs, that are already in the playlist. " +
                             "Do not return the Songs, that you received."
                 )
@@ -44,15 +45,6 @@ object GeminiApi {
         val response = modelPlaylistExtender.generateContent(playlist.toString())
         val text = response.candidates[0].content.parts[0].asTextOrNull().toString()
         val output = Json.decodeFromString<List<Songs>>(text)
-        val spotifyOutput = mutableListOf<SpotifySong>()
-        Log.d("response", output.toString())
-        for (newSong in output) {
-            SpotifyApi.searchSong(newSong, onDone = {
-                spotifyOutput.add(SpotifySong(title = it.title, artist = it.artist, id = it.artist))
-            })
-        }
-        Log.d("Gemini", "adding Songs")
-        SpotifyApi.addSongs(spotifyOutput, id)
         return output
     }
 }

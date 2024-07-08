@@ -100,11 +100,21 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 val songs = mutableListOf<Songs>()
+                val spotifyOutput = mutableListOf<SpotifySong>()
                 for (song in tracks!!) {
                     songs.add(song.toSongs())
                 }
                 CoroutineScope(Dispatchers.IO).launch {
-                    GeminiApi.extendPlaylist(songs.toList(), id)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val output = GeminiApi.extendPlaylist(songs.toList(), id)
+                        Log.d("Gemini", output.toString())
+                        for (newSong in output) {
+                            SpotifyApi.searchSong(newSong, onDone = {
+                                Log.d("Gemini", "converted Song ")
+                                SpotifyApi.addSong(it, id)
+                            })
+                        }
+                    }
                 }
             }) {
                 Icon(painter = painterResource(id = R.drawable.add), contentDescription = "")

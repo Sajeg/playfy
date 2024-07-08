@@ -119,17 +119,13 @@ object SpotifyApi {
         })
     }
 
-    fun searchSong(song: Songs, onDone: (track: SpotifySong) -> Unit) {
+    fun searchSong(song: Songs, onDone: (trackId: String) -> Unit) {
         val client = OkHttpClient()
-
+        val encodedQuery = URLEncoder.encode("${song.title} ${song.artist}", "UTF-8")
+        Log.d("Gemini", encodedQuery)
         val request = Request.Builder()
             .url(
-                "https://api.spotify.com/v1/search?${
-                    song.title.replace(
-                        " ",
-                        "+"
-                    )
-                }+${song.artist.replace(" ", "+")}&type=track"
+                "https://api.spotify.com/v1/search?q=$encodedQuery&type=track"
             )
             .addHeader("Authorization", "Bearer $token")
             .build()
@@ -143,38 +139,27 @@ object SpotifyApi {
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
                     responseBody?.let {
-                        val jsonObject = JSONObject(it)
-                        val tracks = jsonObject.getJSONArray("items")[0] as JSONObject
-                        val artists = tracks.getJSONArray("artists")
-                        var artistsString = ""
-                        for (j in 0..<artists.length()) {
-                            val artist = artists[j] as JSONObject
-                            artistsString += artist.getString("name")
+                        val jsonObject = JSONObject(it).getJSONObject("tracks").getJSONArray("items")[0] as JSONObject
+                        try {
+                            onDone(jsonObject.getString("id"))
+                        } catch (e: Exception) {
+                            Log.d("Gemini", "Error: $jsonObject")
                         }
-                        onDone(
-                            SpotifySong(
-                                title = tracks.getString("name"),
-                                artist = tracks.getString("artist"),
-                                id = tracks.getString("id")
-                            )
-                        )
                     }
                 }
             }
         })
     }
 
-    fun addSongs(track: List<SpotifySong>, id: String) {
+    fun addSong(trackId: String, id: String) {
         val client = OkHttpClient()
-        val uris = mutableListOf<String>()
-        for (uri in track) {
-            uris.add("spotify:track:${uri.id}")
-        }
-        val encodedUris = uris.joinToString(",") { URLEncoder.encode(it, "UTF-8") }
+        val uri = "spotify:track:$trackId"
+        val encodedUri = URLEncoder.encode(uri, "UTF-8")
+
 
         val request = Request.Builder()
             .url(
-                "https://api.spotify.com/v1/playlists/$id/tracks"
+                "https://api.spotify.com/v1/playlists/$id/tracks?uris=$encodedUri"
             )
             .post(FormBody.Builder().build())
             .addHeader("Authorization", "Bearer $token")
