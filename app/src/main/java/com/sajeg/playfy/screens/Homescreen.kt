@@ -88,7 +88,13 @@ fun HomeScreen(navController: NavController) {
                                 .size(150.dp)
                                 .aspectRatio(1f)
                                 .clickable {
-                                    navController.navigate(PlaylistScreen(playlist.id))
+                                    navController.navigate(
+                                        PlaylistScreen(
+                                            playlist.id,
+                                            playlist.name,
+                                            playlist.imgUrl
+                                        )
+                                    )
                                 }
                         )
                         Text(text = playlist.name)

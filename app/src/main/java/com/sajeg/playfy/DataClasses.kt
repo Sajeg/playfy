@@ -20,4 +20,11 @@ data class SpotifySong(
     val title: String,
     val artist: String,
     val id: String
-)
+) {
+    fun toSongs() : Songs{
+        return Songs(
+            title = title,
+            artist = artist
+        )
+    }
+}

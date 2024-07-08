@@ -2,12 +2,14 @@ package com.sajeg.playfy
 
 import android.util.Log
 import okhttp3.Call
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.IOException
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLEncoder
 
 object SpotifyApi {
     var token = ""
@@ -157,6 +159,35 @@ object SpotifyApi {
                             )
                         )
                     }
+                }
+            }
+        })
+    }
+
+    fun addSongs(track: List<SpotifySong>, id: String) {
+        val client = OkHttpClient()
+        val uris = mutableListOf<String>()
+        for (uri in track) {
+            uris.add("spotify:track:${uri.id}")
+        }
+        val encodedUris = uris.joinToString(",") { URLEncoder.encode(it, "UTF-8") }
+
+        val request = Request.Builder()
+            .url(
+                "https://api.spotify.com/v1/playlists/$id/tracks"
+            )
+            .post(FormBody.Builder().build())
+            .addHeader("Authorization", "Bearer $token")
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                e.printStackTrace()
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    Log.d("Success", "Successfully extended Playlist")
                 }
             }
         })

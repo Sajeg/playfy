@@ -22,8 +22,8 @@ fun SetupNavGraph(
             SignInScreen()
         }
         composable<PlaylistScreen> {
-            val id = it.toRoute<PlaylistScreen>().id
-            PlayListView(id = id)
+            val params = it.toRoute<PlaylistScreen>()
+            PlayListView(id = params.id, params.title, params.imgUrl, navController)
         }
     }
 }
@@ -36,5 +36,7 @@ object SignInScreen
 
 @Serializable
 data class PlaylistScreen(
-    val id: String
+    val id: String,
+    val title: String,
+    val imgUrl: String
 )
