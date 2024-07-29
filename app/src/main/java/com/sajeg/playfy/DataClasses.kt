@@ -1,6 +1,7 @@
 package com.sajeg.playfy
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 data class Playlist(
@@ -35,3 +36,11 @@ data class SpotifySong(
 data class SpotifySongList(
     val songs: List<SpotifySong>
 )
+
+fun List<SpotifySong>.toJsonString(): String {
+    return Json.encodeToString(ListSerializer(SpotifySong.serializer()), this)
+}
+
+fun String.toSpotifySongList(): List<SpotifySong> {
+    return Json.decodeFromString(ListSerializer(SpotifySong.serializer()), this)
+}

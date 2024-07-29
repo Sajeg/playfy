@@ -42,9 +42,11 @@ import com.sajeg.playfy.Songs
 import com.sajeg.playfy.SpotifyApi
 import com.sajeg.playfy.SpotifySong
 import com.sajeg.playfy.SpotifySongList
+import com.sajeg.playfy.toJsonString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
@@ -116,7 +118,7 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
                                 Log.d("Gemini", "converted Song ")
                                 spotifyOutput.add(it)
                                 if (spotifyOutput.size == 10) {
-                                    navController.navigate(SelectorScreen(SpotifySongList(spotifyOutput)))
+                                    navController.navigate(SelectorScreen(spotifyOutput.toJsonString()))
                                 }
                             })
                         }

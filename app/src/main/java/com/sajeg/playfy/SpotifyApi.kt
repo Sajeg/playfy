@@ -137,23 +137,28 @@ object SpotifyApi {
 
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
-                    responseBody?.let {
-                        val jsonObject = JSONObject(it)
-                        val tracks = jsonObject.getJSONArray("items")[0] as JSONObject
-                        val artists = tracks.getJSONArray("artists")
-                        var artistsString = ""
-                        for (j in 0..<artists.length()) {
-                            val artist = artists[j] as JSONObject
-                            artistsString += artist.getString("name")
-                        }
-                        onDone(
-                            SpotifySong(
-                                title = tracks.getString("name"),
-                                artist = artistsString,
-                                id = tracks.getString("id")
+                    try {
+                        val responseBody = response.body?.string()
+                        Log.d("SpotifyAPIResponse", responseBody.toString())
+                        responseBody?.let {
+                            val jsonObject = JSONObject(it)
+                            val tracks = jsonObject.getJSONArray("items")[0] as JSONObject
+                            val artists = tracks.getJSONArray("artists")
+                            var artistsString = ""
+                            for (j in 0..<artists.length()) {
+                                val artist = artists[j] as JSONObject
+                                artistsString += artist.getString("name")
+                            }
+                            onDone(
+                                SpotifySong(
+                                    title = tracks.getString("name"),
+                                    artist = artistsString,
+                                    id = tracks.getString("id")
+                                )
                             )
-                        )
+                        }
+                    } catch (e: Exception) {
+                        Log.d("SpotifyAPI", e.toString())
                     }
                 }
             }

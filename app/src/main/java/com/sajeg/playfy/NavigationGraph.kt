@@ -41,7 +41,7 @@ object SignInScreen
 
 @Serializable
 data class SelectorScreen(
-    val tracks: SpotifySongList
+    val tracks: String
 )
 
 @Serializable
