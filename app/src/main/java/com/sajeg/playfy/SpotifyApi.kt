@@ -122,7 +122,6 @@ object SpotifyApi {
     fun searchSong(song: Songs, onDone: (track: SpotifySong) -> Unit) {
         val client = OkHttpClient()
         val encodedQuery = URLEncoder.encode("${song.title} ${song.artist}", "UTF-8")
-        Log.d("Gemini", encodedQuery)
         val request = Request.Builder()
             .url(
                 "https://api.spotify.com/v1/search?q=$encodedQuery&type=track"
@@ -141,13 +140,15 @@ object SpotifyApi {
                         val responseBody = response.body?.string()
                         responseBody?.let {
                             val jsonObject = JSONObject(it)
-                            val tracks = jsonObject.getJSONArray("items")[0] as JSONObject
+                            val tracks = jsonObject.getJSONObject("tracks")
+                                .getJSONArray("items")[0] as JSONObject
                             val artists = tracks.getJSONArray("artists")
                             var artistsString = ""
                             for (j in 0..<artists.length()) {
                                 val artist = artists[j] as JSONObject
                                 artistsString += artist.getString("name")
                             }
+                            Log.d("SpotifyApi", "one success")
                             onDone(
                                 SpotifySong(
                                     title = tracks.getString("name"),

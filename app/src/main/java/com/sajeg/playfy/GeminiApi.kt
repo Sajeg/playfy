@@ -1,5 +1,6 @@
 package com.sajeg.playfy
 
+import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.Content
@@ -41,8 +42,10 @@ object GeminiApi {
         if (text != null) {
             val output = JSONObject(text)
             val songs = Json.decodeFromString<List<Songs>>(output.getJSONArray("songs").toString())
+            Log.d("Gemini", "Successfully converted!")
             return songs
         } else {
+            Log.d("Gemini", "Not successfully converted!")
             return null
         }
     }
