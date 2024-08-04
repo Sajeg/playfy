@@ -194,7 +194,7 @@ object SpotifyApi {
         })
     }
 
-    fun createPlaylist(title: String, onDone: (playlistId: String) -> Unit) {
+    fun createPlaylist(title: String, created: (playlistId: String) -> Unit) {
         val client = OkHttpClient()
         val body = """{"name": "$title"}""".trimIndent()
 
@@ -220,7 +220,7 @@ object SpotifyApi {
                     val responseBody = response.body?.string()
                     responseBody?.let {
                         val jsonObject = JSONObject(it)
-                        onDone(jsonObject.getString("id"))
+                        created(jsonObject.getString("id"))
                     }
                 } else {
                     Log.e("SpotifyApi", "Error: ${response.networkResponse}")

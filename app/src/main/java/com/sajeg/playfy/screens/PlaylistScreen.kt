@@ -103,7 +103,7 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                navController.navigate(SelectorScreen(id, title))
+                navController.navigate(SelectorScreen(playlistId = id, title = title, null))
             }) {
                 Icon(painter = painterResource(id = R.drawable.add), contentDescription = "")
             }

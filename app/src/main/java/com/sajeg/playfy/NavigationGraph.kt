@@ -1,5 +1,6 @@
 package com.sajeg.playfy
 
+import android.app.VoiceInteractor.Prompt
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -26,8 +27,9 @@ fun SetupNavGraph(
             val params = it.toRoute<SelectorScreen>()
             SelectorScreen(
                 navController = navController,
-                playlistId = params.playlistId,
-                title = params.title
+                paramPlaylistId = params.playlistId,
+                paramTitle = params.title,
+                prompt = params.prompt
             )
         }
         composable<PlaylistScreen> {
@@ -45,8 +47,9 @@ object SignInScreen
 
 @Serializable
 data class SelectorScreen(
-    val playlistId: String,
-    val title: String
+    val playlistId: String?,
+    val title: String?,
+    val prompt: String?
 )
 
 @Serializable

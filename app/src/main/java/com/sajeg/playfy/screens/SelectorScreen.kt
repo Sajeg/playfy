@@ -1,6 +1,7 @@
 package com.sajeg.playfy.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
@@ -45,8 +47,10 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectorScreen(navController: NavController, playlistId: String, title: String) {
+fun SelectorScreen(navController: NavController, paramPlaylistId: String?, paramTitle: String?, prompt: String?) {
     var tracks by remember { mutableStateOf<List<SpotifySong>?>(null) }
+    var title by remember { mutableStateOf(paramTitle) }
+    var playlistId by remember { mutableStateOf(paramPlaylistId) }
     val songs = mutableListOf<Songs>()
     var spotifyOutput by remember { mutableStateOf(listOf<SpotifySong>()) }
     var addSongToPlaylist by remember { mutableStateOf(listOf<Boolean>()) }
@@ -65,7 +69,7 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text(text = title) },
+                    title = { Text(text = title!!) },
                     navigationIcon = {
                         IconButton(onClick = {
                             navController.popBackStack()
@@ -83,7 +87,7 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
                     showOutput = false
                     for (i in 1..<spotifyOutput.size) {
                         if (addSongToPlaylist[i]) {
-                            SpotifyApi.addSong(spotifyOutput[i].id, playlistId)
+                            SpotifyApi.addSong(spotifyOutput[i].id, playlistId!!)
                         }
                     }
                     navController.navigate(HomeScreen)
@@ -147,9 +151,36 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
         }
     }
     if (tracks == null) {
-        SpotifyApi.getTracks(playlistId, onDone = {
-            tracks = it
-        })
+        if (playlistId == null) {
+            LaunchedEffect(showOutput) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val (newPlaylistSongs, newPlaylistTitle) = GeminiApi.newPlaylist(prompt!!)
+                    if (newPlaylistSongs == null) {
+                        return@launch
+                    }
+                    SpotifyApi.createPlaylist(newPlaylistTitle, created = { newPlaylistId ->
+                        for (newSong in newPlaylistSongs) {
+                            SpotifyApi.searchSong(newSong, onDone = { song ->
+                                addSongToPlaylist = addSongToPlaylist.toMutableList()
+                                    .apply { add(true) }
+                                spotifyOutput = spotifyOutput.toMutableList()
+                                    .apply { add(song) }
+                                if (spotifyOutput.size >= 25) {
+                                    Log.d("Gemini", "Showing output")
+                                    playlistId = newPlaylistId
+                                    title = newPlaylistTitle
+                                    showOutput = true
+                                }
+                            })
+                        }
+                    })
+                }
+            }
+        } else {
+            SpotifyApi.getTracks(playlistId!!, onDone = {
+                tracks = it
+            })
+        }
     } else if (!requestSent) {
         requestSent = true
         for (song in tracks!!) {
@@ -160,7 +191,7 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
                 CoroutineScope(Dispatchers.IO).launch {
                     Log.d("Gemini", "Extending now")
                     val output =
-                        GeminiApi.extendPlaylist(songs.toList(), playlistId) ?: return@launch
+                        GeminiApi.extendPlaylist(songs.toList(), playlistId!!) ?: return@launch
                     for (newSong in output) {
                         SpotifyApi.searchSong(newSong, onDone = { track ->
                             Log.d("Gemini", "converted Song ")
@@ -178,9 +209,4 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
             }
         }
     }
-//    LazyColumn {
-//        items(songs) { song ->
-//            Text(text = song.title)
-//        }
-//    }
 }

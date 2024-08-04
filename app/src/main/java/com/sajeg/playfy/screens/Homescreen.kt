@@ -43,6 +43,7 @@ import com.sajeg.playfy.GeminiApi
 import com.sajeg.playfy.Playlist
 import com.sajeg.playfy.PlaylistScreen
 import com.sajeg.playfy.R
+import com.sajeg.playfy.SelectorScreen
 import com.sajeg.playfy.SpotifyApi
 import com.sajeg.playfy.paddingModifier
 import kotlinx.coroutines.CoroutineScope
@@ -80,16 +81,22 @@ fun HomeScreen(navController: NavController) {
                     val outputPlaylists = mutableListOf<Playlist>()
                     for (i in 0..<it.length()) {
                         val playlist = it[i] as JSONObject
-                        val images = playlist.getJSONArray("images")[0] as JSONObject
-                        outputPlaylists.add(
-                            Playlist(
-                                id = playlist.getString("id"),
-                                name = playlist.getString("name"),
-                                description = playlist.getString("description"),
-                                imgUrl = images.getString("url"),
-                                trackCount = playlist.getJSONObject("tracks").getInt("total")
+                        val images = try {
+                             playlist.getJSONArray("images")[0] as JSONObject
+                        } catch (_:Exception) {
+                            null
+                        }
+                        if (images != null) {
+                            outputPlaylists.add(
+                                Playlist(
+                                    id = playlist.getString("id"),
+                                    name = playlist.getString("name"),
+                                    description = playlist.getString("description"),
+                                    imgUrl = images.getString("url"),
+                                    trackCount = playlist.getJSONObject("tracks").getInt("total")
+                                )
                             )
-                        )
+                        }
                     }
                     playlists = outputPlaylists
                 }
@@ -114,32 +121,13 @@ fun HomeScreen(navController: NavController) {
                 confirmButton = {
                     TextButton(onClick = {
                         showDialog = false
-                        CoroutineScope(Dispatchers.IO).launch {
-                            val (songs, title) = GeminiApi.newPlaylist(prompt)
-                            if (songs == null) {
-                                return@launch
-                            }
-                            SpotifyApi.createPlaylist(title, onDone = { playlistId ->
-                                for (newSong in songs) {
-                                    SpotifyApi.searchSong(newSong, onDone = { song ->
-                                        Log.d("Gemini", "converted Song ")
-                                        SpotifyApi.addSong(song.id, playlistId)
-                                    })
-                                }
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    Toast.makeText(
-                                        context,
-                                        "Done creating Playlist",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            })
-                        }
+                        navController.navigate(SelectorScreen(prompt = prompt,
+                            playlistId = null, title = null
+                        ))
                     }
                     ) {
                         Text(text = "Confirm")
                     }
-
                 },
                 title = { Text(text = "New Playlist") },
                 text = {
