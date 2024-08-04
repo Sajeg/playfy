@@ -115,7 +115,6 @@ fun HomeScreen(navController: NavController) {
     ) { padding ->
         AnimatedVisibility(showDialog) {
             var prompt by remember { mutableStateOf("") }
-            val context = LocalContext.current
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 confirmButton = {

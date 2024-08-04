@@ -2,6 +2,7 @@ package com.sajeg.playfy.screens
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -52,13 +57,25 @@ import kotlinx.serialization.json.Json
 @Composable
 fun PlayListView(id: String, title: String, imgUrl: String, navController: NavController) {
     var tracks by remember { mutableStateOf<List<SpotifySong>?>(null) }
-    var num by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     if (tracks == null) {
         SpotifyApi.getTracks(id, onDone = {
             tracks = it
         })
     }
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            try {
+                tracks = null
+                pullToRefreshState.endRefresh()
+            } catch (e: Exception) {
+                pullToRefreshState.endRefresh()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -115,6 +132,7 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 5.dp)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
             item {
                 GlideImage(
@@ -152,6 +170,16 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
                     }
                 }
             }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PullToRefreshContainer(
+                modifier = Modifier,
+                state = pullToRefreshState,
+            )
         }
     }
 }
