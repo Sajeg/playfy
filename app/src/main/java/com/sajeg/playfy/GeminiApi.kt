@@ -44,7 +44,7 @@ object GeminiApi {
                 TextPart(
                     "You'll receive a set of criteria and your task is then to give back 25 songs with " +
                             "their title and artist that meet the criteria. Make a good mix between popular and unknown songs. " +
-                            "Also return the a name for the Playlist."
+                            "Also return the a name for the Playlist like called playlistName."
                 )
             )
         ),
@@ -72,16 +72,16 @@ object GeminiApi {
         }
     }
 
-    suspend fun newPlaylist(prompt: String): List<Songs>? {
+    suspend fun newPlaylist(prompt: String): Pair<List<Songs>?, String> {
         val response = modelPlaylistCreator.generateContent(prompt)
         val text = response.candidates[0].content.parts[0].asTextOrNull()
         Log.d("Response", text!!)
         if (text != null) {
             val output = JSONObject(text)
             val songs = Json.decodeFromString<List<Songs>>(output.getJSONArray("songs").toString())
-            return songs
+            return Pair(songs, output.getString("playlistName"))
         } else {
-            return null
+            return Pair(null, "n/a")
         }
     }
 }

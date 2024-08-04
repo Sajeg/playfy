@@ -1,11 +1,12 @@
 package com.sajeg.playfy.screens
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,13 +90,32 @@ fun HomeScreen(navController: NavController) {
     ) { padding ->
         AnimatedVisibility(showDialog) {
             var prompt by remember { mutableStateOf("") }
+            val context = LocalContext.current
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 confirmButton = {
                     TextButton(onClick = {
                         showDialog = false
                         CoroutineScope(Dispatchers.IO).launch {
-                            GeminiApi.newPlaylist(prompt)
+                            val (songs, title) = GeminiApi.newPlaylist(prompt)
+                            if (songs == null) {
+                                return@launch
+                            }
+                            SpotifyApi.createPlaylist(title, onDone = { playlistId ->
+                                for (newSong in songs) {
+                                    SpotifyApi.searchSong(newSong, onDone = { song ->
+                                        Log.d("Gemini", "converted Song ")
+                                        SpotifyApi.addSong(song.id, playlistId)
+                                    })
+                                }
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    Toast.makeText(
+                                        context,
+                                        "Done creating Playlist",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            })
                         }
                     }
                     ) {
@@ -104,11 +125,15 @@ fun HomeScreen(navController: NavController) {
                 },
                 title = { Text(text = "New Playlist") },
                 text = {
-                    TextField(value = prompt, onValueChange = { prompt = it }, modifier = Modifier.fillMaxWidth(), placeholder = {
-                        Text(
-                            text = "Specify a genre, topic, artist..."
-                        )
-                    })
+                    TextField(
+                        value = prompt,
+                        onValueChange = { prompt = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = {
+                            Text(
+                                text = "Specify a genre, topic, artist..."
+                            )
+                        })
                 })
         }
         Column(
