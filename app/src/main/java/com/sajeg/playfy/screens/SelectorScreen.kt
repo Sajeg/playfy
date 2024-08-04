@@ -3,14 +3,15 @@ package com.sajeg.playfy.screens
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -22,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,10 +48,10 @@ import kotlinx.coroutines.launch
 fun SelectorScreen(navController: NavController, playlistId: String, title: String) {
     var tracks by remember { mutableStateOf<List<SpotifySong>?>(null) }
     val songs = mutableListOf<Songs>()
-    val spotifyOutput by remember { mutableStateOf<MutableList<SpotifySong>>(mutableListOf()) }
+    var spotifyOutput by remember { mutableStateOf(listOf<SpotifySong>()) }
+    var addSongToPlaylist by remember { mutableStateOf(listOf<Boolean>()) }
     var requestSent by remember { mutableStateOf(false) }
     var showOutput by remember { mutableStateOf(false) }
-    var num by remember { mutableIntStateOf(0) }
 
     if (!showOutput) {
         Column(
@@ -62,7 +62,6 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
             CircularProgressIndicator()
         }
     } else {
-        Log.d("Gemini", "HErE")
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -82,8 +81,10 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
             floatingActionButton = {
                 FloatingActionButton(onClick = {
                     showOutput = false
-                    for (song in spotifyOutput) {
-                        SpotifyApi.addSong(song.id, playlistId)
+                    for (i in 1..<spotifyOutput.size) {
+                        if (addSongToPlaylist[i]) {
+                            SpotifyApi.addSong(spotifyOutput[i].id, playlistId)
+                        }
                     }
                     navController.navigate(HomeScreen)
                 }) {
@@ -100,28 +101,45 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
                     fontSize = 20.sp
                 )
                 LazyColumn {
-                    items(spotifyOutput) { track ->
-                        num++
-                        Card(
-                            colors = CardColors(
-                                containerColor = if (num % 2 == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = if (num % 2 == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                disabledContentColor = MaterialTheme.colorScheme.primary
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(5.dp)
-                        ) {
-                            Text(
-                                text = track.title,
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                            )
-                            Text(
-                                text = "from ${track.artist}",
-                                fontStyle = FontStyle.Italic,
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                            )
+                    for (i in 1..<spotifyOutput.size) {
+                        item {
+                            Row {
+                                Checkbox(
+                                    checked = addSongToPlaylist[i],
+                                    onCheckedChange = { checked ->
+                                        addSongToPlaylist = addSongToPlaylist.toMutableList()
+                                            .apply { this[i] = checked }
+                                    })
+                                Card(
+                                    colors = CardColors(
+                                        containerColor = if (i % 2 == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = if (i % 2 == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                        disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        disabledContentColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(5.dp)
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = spotifyOutput[i].title,
+                                            modifier = Modifier.padding(
+                                                horizontal = 5.dp,
+                                                vertical = 1.dp
+                                            )
+                                        )
+                                        Text(
+                                            text = "from ${spotifyOutput[i].artist}",
+                                            fontStyle = FontStyle.Italic,
+                                            modifier = Modifier.padding(
+                                                horizontal = 5.dp,
+                                                vertical = 1.dp
+                                            )
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -144,9 +162,12 @@ fun SelectorScreen(navController: NavController, playlistId: String, title: Stri
                     val output =
                         GeminiApi.extendPlaylist(songs.toList(), playlistId) ?: return@launch
                     for (newSong in output) {
-                        SpotifyApi.searchSong(newSong, onDone = {
+                        SpotifyApi.searchSong(newSong, onDone = { track ->
                             Log.d("Gemini", "converted Song ")
-                            spotifyOutput.add(it)
+                            addSongToPlaylist = addSongToPlaylist.toMutableList()
+                                .apply { add(true) }
+                            spotifyOutput = spotifyOutput.toMutableList()
+                                .apply { add(track) }
                             if (spotifyOutput.size >= 10) {
                                 Log.d("Gemini", "Showing output")
                                 showOutput = true

@@ -126,28 +126,29 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
                 )
             }
             if (tracks != null) {
-                items(tracks!!) { track ->
-                    num++
-                    Card(
-                        colors = CardColors(
-                            containerColor = if (num % 2 == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = if (num % 2 == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            disabledContentColor = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(5.dp)
-                    ) {
-                        Text(
-                            text = track.title,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                        )
-                        Text(
-                            text = "from ${track.artist}",
-                            fontStyle = FontStyle.Italic,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                        )
+                for (i in 1..<tracks!!.size) {
+                    item {
+                        Card(
+                            colors = CardColors(
+                                containerColor = if (i % 2 == 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (i % 2 == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                disabledContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                disabledContentColor = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                        ) {
+                            Text(
+                                text = tracks!![i].title,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                            )
+                            Text(
+                                text = "from ${tracks!![i].artist}",
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                            )
+                        }
                     }
                 }
             }
