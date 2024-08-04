@@ -9,6 +9,7 @@ import com.google.ai.client.generativeai.type.TextPart
 import com.google.ai.client.generativeai.type.asTextOrNull
 import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
 
 
 object GeminiApi {
@@ -20,7 +21,7 @@ object GeminiApi {
                 TextPart(
                     "You'll receive a list of songs. You task is then to add 10 songs with " +
                             "their title and artist that are similar to the songs, that are already in the playlist with a good mix between popular and unknown songs. " +
-                            "Do not return the Songs, that you received."
+                            "Do not return the Songs, that you received, but also the genre of the Playlist. Not for each song individually."
                 )
             )
         ),
@@ -34,10 +35,15 @@ object GeminiApi {
         }
     )
 
-    suspend fun extendPlaylist(playlist: List<Songs>, id: String): List<Songs> {
+    suspend fun extendPlaylist(playlist: List<Songs>, id: String): List<Songs>? {
         val response = modelPlaylistExtender.generateContent(playlist.toString())
-        val text = response.candidates[0].content.parts[0].asTextOrNull().toString()
-        val output = Json.decodeFromString<List<Songs>>(text)
-        return output
+        val text = response.candidates[0].content.parts[0].asTextOrNull()
+        if (text != null) {
+            val output = JSONObject(text)
+            val songs = Json.decodeFromString<List<Songs>>(output.getJSONArray("songs").toString())
+            return songs
+        } else {
+            return null
+        }
     }
 }

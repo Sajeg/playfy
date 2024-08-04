@@ -55,7 +55,6 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
     var num by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
     if (tracks == null) {
-        Log.d("SpotifyApi", "true")
         SpotifyApi.getTracks(id, onDone = {
             tracks = it
         })
@@ -87,7 +86,7 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
                         }
 
                         val shareIntent =
-                            Intent.createChooser(sendIntent, "Share the Book")
+                            Intent.createChooser(sendIntent, "Share the Playlist")
                         ContextCompat.startActivity(
                             context,
                             shareIntent,
@@ -104,26 +103,7 @@ fun PlayListView(id: String, title: String, imgUrl: String, navController: NavCo
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                val songs = mutableListOf<Songs>()
-                val spotifyOutput = mutableListOf<SpotifySong>()
-                for (song in tracks!!) {
-                    songs.add(song.toSongs())
-                }
-                CoroutineScope(Dispatchers.IO).launch {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val output = GeminiApi.extendPlaylist(songs.toList(), id)
-                        Log.d("Gemini", output.toString())
-                        for (newSong in output) {
-                            SpotifyApi.searchSong(newSong, onDone = {
-                                Log.d("Gemini", "converted Song ")
-                                spotifyOutput.add(it)
-                                if (spotifyOutput.size == 10) {
-                                    navController.navigate(SelectorScreen(spotifyOutput.toJsonString()))
-                                }
-                            })
-                        }
-                    }
-                }
+                navController.navigate(SelectorScreen(id))
             }) {
                 Icon(painter = painterResource(id = R.drawable.add), contentDescription = "")
             }

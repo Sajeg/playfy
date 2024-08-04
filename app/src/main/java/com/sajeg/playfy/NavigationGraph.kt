@@ -24,7 +24,7 @@ fun SetupNavGraph(
         }
         composable<SelectorScreen> {
             val params = it.toRoute<SelectorScreen>()
-            SelectorScreen(navController = navController, songString = params.tracks)
+            SelectorScreen(navController = navController, playlistId = params.playlistId)
         }
         composable<PlaylistScreen> {
             val params = it.toRoute<PlaylistScreen>()
@@ -41,7 +41,7 @@ object SignInScreen
 
 @Serializable
 data class SelectorScreen(
-    val tracks: String
+    val playlistId: String
 )
 
 @Serializable

@@ -139,7 +139,6 @@ object SpotifyApi {
                 if (response.isSuccessful) {
                     try {
                         val responseBody = response.body?.string()
-                        Log.d("SpotifyAPIResponse", responseBody.toString())
                         responseBody?.let {
                             val jsonObject = JSONObject(it)
                             val tracks = jsonObject.getJSONArray("items")[0] as JSONObject
